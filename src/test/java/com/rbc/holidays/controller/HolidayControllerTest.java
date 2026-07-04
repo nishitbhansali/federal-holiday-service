@@ -136,6 +136,21 @@ class HolidayControllerTest {
     }
 
     @Test
+    void searchHolidaysShouldFallbackToCountryAndYearWhenOnlyOneDateIsProvided() {
+        LocalDate startDate = LocalDate.of(2026, 1, 1);
+        List<HolidayResponse> response = List.of(
+                new HolidayResponse(1L, "Independence Day", LocalDate.of(2026, 7, 4), "USA", true, "Holiday")
+        );
+        when(holidayService.getHolidaysByCountryAndYear("USA", 2026)).thenReturn(response);
+
+        var entity = controller.searchHolidays("USA", 2026, startDate, null);
+
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(entity.getBody()).isEqualTo(response);
+        verify(holidayService).getHolidaysByCountryAndYear("USA", 2026);
+    }
+
+    @Test
     void deleteHolidayShouldReturnNoContent() {
         RequestContextHolder.set(RequestContext.of("123e4567-e89b-12d3-a456-426614174000", "tester", "/api/v1/holidays/4"));
 

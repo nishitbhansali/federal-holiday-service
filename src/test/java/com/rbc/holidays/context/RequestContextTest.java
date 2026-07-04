@@ -25,8 +25,22 @@ class RequestContextTest {
     }
 
     @Test
+    void constructorShouldRejectNullCorrelationId() {
+        assertThatThrownBy(() -> new RequestContext(null, "qa-user", "web", "/path"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Correlation ID is required");
+    }
+
+    @Test
     void constructorShouldRejectBlankUserId() {
         assertThatThrownBy(() -> new RequestContext("123e4567-e89b-12d3-a456-426614174000", " ", "web", "/path"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("User ID is required");
+    }
+
+    @Test
+    void constructorShouldRejectNullUserId() {
+        assertThatThrownBy(() -> new RequestContext("123e4567-e89b-12d3-a456-426614174000", null, "web", "/path"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("User ID is required");
     }

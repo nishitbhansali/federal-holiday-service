@@ -11,14 +11,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *   <li>RESTful API for managing federal holidays (USA and CANADA)</li>
  *   <li>Enterprise-grade request validation with JWT authentication</li>
  *   <li>Correlation ID tracking for distributed tracing</li>
- *   <li>Profile-based configuration (local: H2, prod: Oracle)</li>
+ *   <li>Profile-based configuration for local H2-backed development</li>
  * </ul>
  * 
  * <p><strong>Technology Stack:</strong></p>
  * <ul>
  *   <li>Java 21 with modern Records for DTOs</li>
  *   <li>Spring Boot 3.5.13 with auto-configuration</li>
- *   <li>Spring Data JPA with H2/Oracle support</li>
+ *   <li>Spring Data JPA with H2 support</li>
  *   <li>JWT authentication (JJWT 0.12.6)</li>
  *   <li>OpenAPI 3.0 / Swagger UI for API documentation</li>
  * </ul>
@@ -27,10 +27,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * <pre>
  * # Local profile (H2 in-memory database)
  * mvn spring-boot:run -Dspring-boot.run.profiles=local
- * 
- * # Production profile (Oracle database)
- * mvn spring-boot:run -Dspring-boot.run.profiles=prod \
- *   -Dspring-boot.run.arguments="--DB_URL=jdbc:oracle:thin:@//host:1521/service --JWT_SECRET=secret"
  * </pre>
  * 
  * <p><strong>Access Points:</strong></p>

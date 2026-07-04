@@ -70,6 +70,22 @@ class RequestValidationFilterTest {
     }
 
     @Test
+    void shouldDelegateWhenCorrelationIdHeaderIsBlank() throws Exception {
+        RequestValidationFilter filter = new RequestValidationFilter(jwtUtil, handlerExceptionResolver);
+        MockHttpServletRequest request = baseRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        request.addHeader("X-Correlation-ID", " ");
+
+        filter.doFilter(request, response, filterChain);
+
+        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        verify(handlerExceptionResolver).resolveException(eq(request), eq(response), eq(null), exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Missing X-Correlation-ID header");
+    }
+
+    @Test
     void shouldDelegateWhenCorrelationIdLengthIsInvalid() throws Exception {
         RequestValidationFilter filter = new RequestValidationFilter(jwtUtil, handlerExceptionResolver);
         MockHttpServletRequest request = baseRequest();
@@ -107,6 +123,23 @@ class RequestValidationFilterTest {
         MockHttpServletRequest request = baseRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         request.addHeader("X-Correlation-ID", "123e4567-e89b-12d3-a456-426614174000");
+
+        filter.doFilter(request, response, filterChain);
+
+        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        verify(handlerExceptionResolver).resolveException(eq(request), eq(response), eq(null), exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Missing Authorization header");
+    }
+
+    @Test
+    void shouldDelegateWhenAuthorizationHeaderIsBlank() throws Exception {
+        RequestValidationFilter filter = new RequestValidationFilter(jwtUtil, handlerExceptionResolver);
+        MockHttpServletRequest request = baseRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        request.addHeader("X-Correlation-ID", "123e4567-e89b-12d3-a456-426614174000");
+        request.addHeader("Authorization", " ");
 
         filter.doFilter(request, response, filterChain);
 
@@ -159,6 +192,24 @@ class RequestValidationFilterTest {
         when(jwtUtil.extractTokenFromHeader("Bearer jwt-token")).thenReturn("jwt-token");
         when(jwtUtil.validateToken("jwt-token")).thenReturn(true);
         when(jwtUtil.getUserIdFromToken("jwt-token")).thenReturn(" ");
+
+        filter.doFilter(request, response, filterChain);
+
+        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        verify(handlerExceptionResolver).resolveException(eq(request), eq(response), eq(null), exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Failed to extract user ID from JWT token");
+    }
+
+    @Test
+    void shouldDelegateWhenUserIdIsNull() throws Exception {
+        RequestValidationFilter filter = new RequestValidationFilter(jwtUtil, handlerExceptionResolver);
+        MockHttpServletRequest request = authenticatedRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        when(jwtUtil.extractTokenFromHeader("Bearer jwt-token")).thenReturn("jwt-token");
+        when(jwtUtil.validateToken("jwt-token")).thenReturn(true);
+        when(jwtUtil.getUserIdFromToken("jwt-token")).thenReturn(null);
 
         filter.doFilter(request, response, filterChain);
 

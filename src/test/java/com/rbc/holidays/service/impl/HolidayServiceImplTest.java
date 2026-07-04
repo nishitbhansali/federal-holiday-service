@@ -127,6 +127,15 @@ class HolidayServiceImplTest {
     }
 
     @Test
+    void getHolidayByIdShouldThrowWhenMissing() {
+        when(holidayRepository.findById(5L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getHolidayById(5L))
+                .isInstanceOf(HolidayNotFoundException.class)
+                .hasMessage("Holiday not found with id: 5");
+    }
+
+    @Test
     void getAllHolidaysShouldReturnMappedResponses() {
         when(holidayRepository.findAll()).thenReturn(List.of(
                 holidayEntity(1L, "Independence Day", LocalDate.of(2026, 7, 4), "USA", true),
@@ -156,6 +165,28 @@ class HolidayServiceImplTest {
         assertThatThrownBy(() -> service.getHolidaysByCountry("MARS"))
                 .isInstanceOf(InvalidCountryException.class)
                 .hasMessage("Invalid country 'MARS'. Supported countries: CANADA, USA");
+    }
+
+    @Test
+    void getHolidaysByCountryShouldThrowForBlankCountry() {
+        assertThatThrownBy(() -> service.getHolidaysByCountry(" "))
+                .isInstanceOf(InvalidCountryException.class)
+                .hasMessage("Invalid country ' '. Supported countries: CANADA, USA");
+    }
+
+    @Test
+    void createHolidayShouldPreserveExplicitRecurringFalse() {
+        HolidayRequest request = new HolidayRequest("One Time Holiday", LocalDate.of(2026, 11, 1), "USA", false, "One-time");
+        when(holidayRepository.existsByCountryAndHolidayDate("USA", request.holidayDate())).thenReturn(false);
+        when(holidayRepository.save(any(FederalHoliday.class))).thenAnswer(invocation -> {
+            FederalHoliday holiday = invocation.getArgument(0);
+            holiday.setId(11L);
+            return holiday;
+        });
+
+        HolidayResponse response = service.createHoliday(request);
+
+        assertThat(response.isRecurring()).isFalse();
     }
 
     @Test
@@ -297,6 +328,25 @@ class HolidayServiceImplTest {
         try (MockedStatic<FileParserUtil> parser = mockStatic(FileParserUtil.class)) {
             parser.when(() -> FileParserUtil.parseJsonFile(file)).thenReturn(List.of(request));
             when(holidayRepository.existsByCountryAndHolidayDate("USA", request.holidayDate())).thenReturn(false);
+            when(holidayRepository.save(any(FederalHoliday.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            FileUploadResponse response = service.uploadHolidaysFromFile(file);
+
+            assertThat(response.totalRecords()).isEqualTo(1);
+            assertThat(response.successCount()).isEqualTo(1);
+            assertThat(response.failureCount()).isEqualTo(0);
+            assertThat(response.errors()).isEmpty();
+        }
+    }
+
+    @Test
+    void uploadHolidaysFromFileShouldSupportCsvAndReturnSuccess() {
+        MockMultipartFile file = new MockMultipartFile("file", "holidays.csv", "text/csv", "header".getBytes());
+        HolidayRequest request = request("Labour Day", LocalDate.of(2026, 9, 7), "CANADA", false);
+
+        try (MockedStatic<FileParserUtil> parser = mockStatic(FileParserUtil.class)) {
+            parser.when(() -> FileParserUtil.parseCsvFile(file)).thenReturn(List.of(request));
+            when(holidayRepository.existsByCountryAndHolidayDate("CANADA", request.holidayDate())).thenReturn(false);
             when(holidayRepository.save(any(FederalHoliday.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             FileUploadResponse response = service.uploadHolidaysFromFile(file);

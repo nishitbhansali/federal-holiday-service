@@ -4,8 +4,8 @@ import com.rbc.holidays.dto.FileUploadResponse;
 import com.rbc.holidays.dto.HolidayRequest;
 import com.rbc.holidays.dto.HolidayResponse;
 import com.rbc.holidays.entity.FederalHoliday;
-import com.rbc.holidays.enums.Country;
 import com.rbc.holidays.exception.DuplicateHolidayException;
+import com.rbc.holidays.exception.InvalidCountryException;
 import com.rbc.holidays.exception.HolidayNotFoundException;
 import com.rbc.holidays.exception.InvalidFileFormatException;
 import com.rbc.holidays.repository.HolidayRepository;
@@ -13,6 +13,7 @@ import com.rbc.holidays.service.HolidayService;
 import com.rbc.holidays.util.FileParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,14 +29,31 @@ public class HolidayServiceImpl implements HolidayService {
 
     private static final Logger logger = LoggerFactory.getLogger(HolidayServiceImpl.class);
     private final HolidayRepository holidayRepository;
+    
+    @Value("#{'${holidays.supported-countries}'.split(',')}")
+    private List<String> supportedCountries;
 
     public HolidayServiceImpl(HolidayRepository holidayRepository) {
         this.holidayRepository = holidayRepository;
+    }
+    
+    /**
+     * Validates that the country is in the supported countries list.
+     * 
+     * @param country Country code to validate
+     * @throws InvalidCountryException if country is not supported
+     */
+    private void validateCountry(String country) {
+        if (!supportedCountries.contains(country)) {
+            throw new InvalidCountryException(country, String.join(", ", supportedCountries));
+        }
     }
 
     @Override
     public HolidayResponse createHoliday(HolidayRequest request) {
         logger.info("Creating holiday: {} for country: {}", request.holidayName(), request.country());
+        
+        validateCountry(request.country());
 
         if (holidayRepository.existsByCountryAndHolidayDate(request.country(), request.holidayDate())) {
             throw new DuplicateHolidayException(
@@ -53,6 +71,8 @@ public class HolidayServiceImpl implements HolidayService {
     @Override
     public HolidayResponse updateHoliday(Long id, HolidayRequest request) {
         logger.info("Updating holiday with id: {}", id);
+        
+        validateCountry(request.country());
 
         FederalHoliday existingHoliday = holidayRepository.findById(id)
                 .orElseThrow(() -> new HolidayNotFoundException(id));
@@ -102,7 +122,7 @@ public class HolidayServiceImpl implements HolidayService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<HolidayResponse> getHolidaysByCountry(Country country) {
+    public List<HolidayResponse> getHolidaysByCountry(String country) {
         logger.info("Fetching holidays for country: {}", country);
 
         return holidayRepository.findByCountry(country).stream()
@@ -122,7 +142,7 @@ public class HolidayServiceImpl implements HolidayService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<HolidayResponse> getHolidaysByCountryAndYear(Country country, Integer year) {
+    public List<HolidayResponse> getHolidaysByCountryAndYear(String country, Integer year) {
         logger.info("Fetching holidays for country: {} and year: {}", country, year);
 
         if (country != null && year != null) {
@@ -229,9 +249,7 @@ public class HolidayServiceImpl implements HolidayService {
                 holiday.getHolidayDate(),
                 holiday.getCountry(),
                 holiday.getIsRecurring(),
-                holiday.getDescription(),
-                holiday.getCreatedAt(),
-                holiday.getUpdatedAt()
+                holiday.getDescription()
         );
     }
 }

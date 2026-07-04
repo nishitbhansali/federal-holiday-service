@@ -108,6 +108,31 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles invalid country exceptions.
+     * Triggered when a country code is not in the supported countries list.
+     * 
+     * @param ex InvalidCountryException with country details
+     * @param request Current HTTP request
+     * @return 400 BAD REQUEST with error details
+     */
+    @ExceptionHandler(InvalidCountryException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCountryException(
+            InvalidCountryException ex, HttpServletRequest request) {
+        logger.error("Invalid country: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(ZoneId.of("America/Toronto")),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "RBC_INVALID_COUNTRY",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Handles invalid file format exceptions during file upload.
      * Triggered when uploaded file is empty, unsupported type, or malformed.
      * 

@@ -1,6 +1,5 @@
 package com.rbc.holidays.entity;
 
-import com.rbc.holidays.enums.Country;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -68,13 +67,12 @@ public class FederalHoliday {
     private LocalDate holidayDate;
 
     /**
-     * Country for which this holiday applies (USA or CANADA).
-     * Stored as STRING in database for readability.
+     * Country for which this holiday applies (e.g., USA, CANADA, SPAIN).
+     * Stored as STRING in database. Validated against configured supported countries.
      */
-    @NotNull(message = "Country is required")
-    @Enumerated(EnumType.STRING)
+    @NotBlank(message = "Country is required")
     @Column(name = "country", nullable = false, length = 50)
-    private Country country;
+    private String country;
 
     /**
      * Indicates if the holiday recurs annually.

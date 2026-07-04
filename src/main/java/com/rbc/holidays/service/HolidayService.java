@@ -3,7 +3,6 @@ package com.rbc.holidays.service;
 import com.rbc.holidays.dto.FileUploadResponse;
 import com.rbc.holidays.dto.HolidayRequest;
 import com.rbc.holidays.dto.HolidayResponse;
-import com.rbc.holidays.enums.Country;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -74,10 +73,10 @@ public interface HolidayService {
     /**
      * Retrieves all holidays for a specific country.
      * 
-     * @param country Country to filter by (USA or CANADA)
+     * @param country Country code to filter by (e.g., USA, CANADA, SPAIN)
      * @return List of holidays for the country
      */
-    List<HolidayResponse> getHolidaysByCountry(Country country);
+    List<HolidayResponse> getHolidaysByCountry(String country);
 
     /**
      * Retrieves holidays within a date range.
@@ -92,11 +91,11 @@ public interface HolidayService {
      * Retrieves holidays filtered by country and/or year.
      * Flexible query - either or both parameters can be provided.
      * 
-     * @param country Country to filter by (optional)
+     * @param country Country code to filter by (optional)
      * @param year Year to filter by (optional)
      * @return List of holidays matching criteria
      */
-    List<HolidayResponse> getHolidaysByCountryAndYear(Country country, Integer year);
+    List<HolidayResponse> getHolidaysByCountryAndYear(String country, Integer year);
 
     /**
      * Deletes a federal holiday by ID.

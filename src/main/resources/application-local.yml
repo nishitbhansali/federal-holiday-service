@@ -29,4 +29,4 @@ logging:
 # JWT Configuration (DO NOT use this secret in production)
 jwt:
   secret: rbc-federal-holidays-secret-key-must-be-at-least-256-bits-long-for-hs256
-  expiration-ms: 3600000  # 1 hour
+  expiration-ms: 3600000  # 1 hour (for local expired-token testing)

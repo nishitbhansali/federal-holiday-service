@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.rbc.holidays.dto.HolidayRequest;
-import com.rbc.holidays.enums.Country;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -31,7 +30,7 @@ import java.util.List;
  * <ul>
  *   <li>First row must contain header names (case-insensitive)</li>
  *   <li>holidayDate must be in ISO 8601 format (YYYY-MM-DD)</li>
- *   <li>country must be USA or CANADA</li>
+ *   <li>country must be a supported country code (e.g., USA, CANADA, SPAIN)</li>
  *   <li>isRecurring must be true or false</li>
  * </ul>
  * 
@@ -100,7 +99,7 @@ public class FileParserUtil {
                 HolidayRequest request = new HolidayRequest(
                         csvRecord.get("holidayName"),
                         LocalDate.parse(csvRecord.get("holidayDate"), DATE_FORMATTER),
-                        Country.valueOf(csvRecord.get("country").toUpperCase()),
+                        csvRecord.get("country").toUpperCase(),
                         Boolean.parseBoolean(csvRecord.get("isRecurring")),
                         csvRecord.get("description")
                 );

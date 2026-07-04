@@ -63,9 +63,8 @@ public class RequestValidationFilter extends OncePerRequestFilter {
     private static final String[] BYPASS_PATHS = {
         "/actuator/health",
         "/actuator/info",
-        "/swagger-ui",
-        "/v3/api-docs",
-        "/api-docs"
+        "/api/v1/test",
+        "/h2-console"
     };
     
     private final JwtUtil jwtUtil;
@@ -92,7 +91,8 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         
         long startTime = System.currentTimeMillis();
-        String requestPath = request.getRequestURI();
+        // Use getServletPath() to exclude context-path (/federal-holidays-api) from bypass checks
+        String requestPath = request.getServletPath();
         
         try {
             // Bypass validation for health checks and API docs

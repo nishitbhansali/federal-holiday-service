@@ -232,7 +232,6 @@ class RequestValidationFilterTest {
             assertThat(RequestContextHolder.get()).isNotNull();
             assertThat(RequestContextHolder.get().correlationId()).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
             assertThat(RequestContextHolder.get().userId()).isEqualTo("qa-user");
-            assertThat(RequestContextHolder.get().platform()).isEqualTo("unknown");
             assertThat(RequestContextHolder.get().requestPath()).isEqualTo("/api/v1/holidays");
             assertThat(MDC.get("correlationId")).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
             return null;

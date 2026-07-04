@@ -99,7 +99,7 @@ public class FileParserUtil {
                 HolidayRequest request = new HolidayRequest(
                         csvRecord.get("holidayName"),
                         LocalDate.parse(csvRecord.get("holidayDate"), DATE_FORMATTER),
-                        csvRecord.get("country").toUpperCase(),
+                        csvRecord.get("country"),
                         Boolean.parseBoolean(csvRecord.get("isRecurring")),
                         csvRecord.get("description")
                 );

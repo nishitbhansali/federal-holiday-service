@@ -18,7 +18,7 @@ class RequestContextHolderTest {
 
     @Test
     void setGetAndClearShouldManageThreadLocalContext() {
-        RequestContext context = RequestContext.of("123e4567-e89b-12d3-a456-426614174000", "qa-user", "/api/v1/holidays");
+        RequestContext context = new RequestContext("123e4567-e89b-12d3-a456-426614174000", "qa-user", "/api/v1/holidays");
 
         RequestContextHolder.set(context);
 

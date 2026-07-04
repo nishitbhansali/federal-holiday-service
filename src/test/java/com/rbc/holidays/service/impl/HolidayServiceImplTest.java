@@ -236,13 +236,6 @@ class HolidayServiceImplTest {
     }
 
     @Test
-    void getHolidaysByCountryAndYearShouldRejectOutOfRangeYear() {
-        assertThatThrownBy(() -> service.getHolidaysByCountryAndYear("USA", 1800))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Year must be between 1900 and 2100");
-    }
-
-    @Test
     void deleteHolidayShouldDeleteExistingHoliday() {
         when(holidayRepository.existsById(10L)).thenReturn(true);
 

@@ -35,8 +35,6 @@ public class HolidayServiceImpl implements HolidayService {
     private static final Logger logger = LoggerFactory.getLogger(HolidayServiceImpl.class);
     private static final String CONTENT_TYPE_CSV = "text/csv";
     private static final String CONTENT_TYPE_JSON = "application/json";
-    private static final int MIN_YEAR = 1900;
-    private static final int MAX_YEAR = 2100;
     private static final int MAX_UPLOAD_RECORDS = 1000;
 
     private final HolidayRepository holidayRepository;
@@ -143,9 +141,6 @@ public class HolidayServiceImpl implements HolidayService {
     @Transactional(readOnly = true)
     public List<HolidayResponse> getHolidaysByCountryAndYear(String country, Integer year) {
         String normalizedCountry = country == null ? null : normalizeAndValidateCountry(country);
-        if (year != null) {
-            validateYear(year);
-        }
         logger.debug("Fetching holidays for country: {} and year: {}", normalizedCountry, year);
 
         if (normalizedCountry != null && year != null) {
@@ -316,19 +311,6 @@ public class HolidayServiceImpl implements HolidayService {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException(
                     String.format("Start date %s cannot be after end date %s", startDate, endDate));
-        }
-    }
-
-    /**
-     * Validates that the year is within acceptable bounds.
-     * 
-     * @param year Year to validate
-     * @throws IllegalArgumentException if year is out of bounds
-     */
-    private void validateYear(Integer year) {
-        if (year < MIN_YEAR || year > MAX_YEAR) {
-            throw new IllegalArgumentException(
-                    String.format("Year must be between %d and %d", MIN_YEAR, MAX_YEAR));
         }
     }
 

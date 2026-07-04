@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
      */
     private ErrorResponse createErrorResponse(HttpStatus status, String code, String message, String path) {
         return new ErrorResponse(
-                LocalDateTime.now(ZoneId.of("America/Toronto")),
+                LocalDateTime.now(),
                 status.value(),
                 status.getReasonPhrase(),
                 code,
@@ -112,10 +112,8 @@ public class GlobalExceptionHandler {
             DuplicateHolidayException ex, HttpServletRequest request) {
         logger.warn("Duplicate holiday: {}", ex.getMessage());
         
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(ZoneId.of("America/Toronto")),
-                HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.getReasonPhrase(),
+        ErrorResponse errorResponse = createErrorResponse(
+                HttpStatus.CONFLICT,
                 "RBC_DUPLICATE_HOLIDAY",
                 ex.getMessage(),
                 request.getRequestURI()
@@ -137,10 +135,8 @@ public class GlobalExceptionHandler {
             InvalidCountryException ex, HttpServletRequest request) {
         logger.warn("Invalid country: {}", ex.getMessage());
         
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(ZoneId.of("America/Toronto")),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+        ErrorResponse errorResponse = createErrorResponse(
+                HttpStatus.BAD_REQUEST,
                 "RBC_INVALID_COUNTRY",
                 ex.getMessage(),
                 request.getRequestURI()

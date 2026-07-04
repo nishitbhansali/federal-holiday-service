@@ -26,7 +26,7 @@ class FileParserUtilTest {
         assertThat(requests.get(0)).isEqualTo(new HolidayRequest(
                 "Independence Day",
                 LocalDate.of(2026, 7, 4),
-                "USA",
+                "usa",
                 true,
                 "Federal holiday"
         ));

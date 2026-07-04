@@ -44,7 +44,7 @@ class HolidayControllerTest {
     void createHolidayShouldReturnCreatedResponse() {
         HolidayRequest request = new HolidayRequest("Independence Day", LocalDate.of(2026, 7, 4), "USA", true, "Federal holiday");
         HolidayResponse response = new HolidayResponse(1L, "Independence Day", LocalDate.of(2026, 7, 4), "USA", true, "Federal holiday");
-        RequestContextHolder.set(new RequestContext("123e4567-e89b-12d3-a456-426614174000", "tester", "web", "/api/v1/holidays"));
+        RequestContextHolder.set(new RequestContext("123e4567-e89b-12d3-a456-426614174000", "tester", "/api/v1/holidays"));
         when(holidayService.createHoliday(request)).thenReturn(response);
 
         var entity = controller.createHoliday(request);
@@ -58,7 +58,7 @@ class HolidayControllerTest {
     void updateHolidayShouldReturnOkResponse() {
         HolidayRequest request = new HolidayRequest("Canada Day", LocalDate.of(2026, 7, 1), "CANADA", true, "National holiday");
         HolidayResponse response = new HolidayResponse(2L, "Canada Day", LocalDate.of(2026, 7, 1), "CANADA", true, "National holiday");
-        RequestContextHolder.set(RequestContext.of("123e4567-e89b-12d3-a456-426614174000", "tester", "/api/v1/holidays/2"));
+        RequestContextHolder.set(new RequestContext("123e4567-e89b-12d3-a456-426614174000", "tester", "/api/v1/holidays/2"));
         when(holidayService.updateHoliday(2L, request)).thenReturn(response);
 
         var entity = controller.updateHoliday(2L, request);
@@ -152,7 +152,7 @@ class HolidayControllerTest {
 
     @Test
     void deleteHolidayShouldReturnNoContent() {
-        RequestContextHolder.set(RequestContext.of("123e4567-e89b-12d3-a456-426614174000", "tester", "/api/v1/holidays/4"));
+        RequestContextHolder.set(new RequestContext("123e4567-e89b-12d3-a456-426614174000", "tester", "/api/v1/holidays/4"));
 
         var entity = controller.deleteHoliday(4L);
 
@@ -164,7 +164,7 @@ class HolidayControllerTest {
     void uploadHolidaysShouldReturnOkResponse() {
         MockMultipartFile file = new MockMultipartFile("file", "holidays.csv", "text/csv", "header".getBytes());
         FileUploadResponse response = new FileUploadResponse(1, 1, 0, List.of(), "Processed successfully");
-        RequestContextHolder.set(RequestContext.of("123e4567-e89b-12d3-a456-426614174000", "tester", "/api/v1/holidays/upload"));
+        RequestContextHolder.set(new RequestContext("123e4567-e89b-12d3-a456-426614174000", "tester", "/api/v1/holidays/upload"));
         when(holidayService.uploadHolidaysFromFile(file)).thenReturn(response);
 
         var entity = controller.uploadHolidays(file);

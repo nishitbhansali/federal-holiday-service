@@ -135,8 +135,8 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 throw new IllegalArgumentException("Failed to extract user ID from JWT token");
             }
             
-            // Step 6: Create and set RequestContext (platform defaults to 'unknown')
-            RequestContext context = RequestContext.of(correlationId, userId, requestPath);
+            // Step 6: Create and set RequestContext
+            RequestContext context = new RequestContext(correlationId, userId, requestPath);
             RequestContextHolder.set(context);
             
             log.debug("Request validated - Path: {}, User: {}, CorrelationId: {}", 

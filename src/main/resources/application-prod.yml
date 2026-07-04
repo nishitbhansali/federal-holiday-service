@@ -3,9 +3,9 @@ spring:
     activate:
       on-profile: prod
 
-  # Production Database (externalized credentials from environment/vault)
+  # Production Database - Oracle (externalized credentials from environment/vault)
   datasource:
-    url: ${DB_URL:jdbc:postgresql://prod-db-server:5432/holidays_db}
+    url: ${DB_URL:jdbc:oracle:thin:@prod-db-server:1521:ORCLPDB}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:

@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.0</version>
+        <version>3.5.14</version>
         <relativePath/>
     </parent>
     
@@ -20,11 +20,16 @@
     
     <properties>
         <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <springdoc.version>2.6.0</springdoc.version>
+        
+        <!-- Dependency Versions -->
+        <ojdbc.version>21.9.0.0</ojdbc.version>
+        <springdoc.version>2.7.0</springdoc.version>
         <jjwt.version>0.12.6</jjwt.version>
+        <commons-csv.version>1.12.0</commons-csv.version>
+        
+        <!-- Plugin Versions -->
+        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     </properties>
     
     <dependencies>
@@ -46,10 +51,18 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         
-        <!-- H2 Database -->
+        <!-- H2 Database (Local Development) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        
+        <!-- Oracle Database Driver (Production) -->
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11</artifactId>
+            <version>${ojdbc.version}</version>
             <scope>runtime</scope>
         </dependency>
         
@@ -64,7 +77,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>1.11.0</version>
+            <version>${commons-csv.version}</version>
         </dependency>
         
         <!-- JWT Token Support -->
@@ -93,30 +106,28 @@
             <version>${springdoc.version}</version>
         </dependency>
         
-        <!-- Spring Boot Starter Test -->
+        <!-- Spring Boot Starter Test (includes JUnit 5, Mockito, AssertJ, etc.) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
-        <!-- JUnit 5 -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
-        <!-- Mockito -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
     
     <build>
         <plugins>
+            <!-- Surefire: forward the active Maven profile as a JVM system property -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <spring.profiles.active>${spring.profiles.active}</spring.profiles.active>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            
+            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -130,11 +141,11 @@
                 </configuration>
             </plugin>
             
-            <!-- JaCoCo for code coverage -->
+            <!-- JaCoCo Code Coverage Plugin -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.12</version>
+                <version>${jacoco-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <goals>

@@ -1,0 +1,42 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  # Production Database (externalized credentials from environment/vault)
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://prod-db-server:5432/holidays_db}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+  
+  # JPA Configuration (Production)
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Never create/update schema in production
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+# Production logging configuration
+logging:
+  level:
+    root: WARN
+    com.rbc.holidays: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{correlationId}] [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/federal-holidays-service/application.log
+    max-size: 100MB
+    max-history: 30
+
+# JWT Configuration (externalized from Azure Key Vault or environment)
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-ms: 1800000  # 30 minutes

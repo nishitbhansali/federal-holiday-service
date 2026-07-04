@@ -1,0 +1,19 @@
+server:
+  # Service port and servlet context
+  port: 8080
+  servlet:
+    context-path: /federal-holidays-api
+
+spring:
+  application:
+    name: federal-holidays-service
+  profiles:
+    # Active profile (override with -Dspring.profiles.active=prod when needed)
+    active: local
+  
+  # File upload settings (common across environments)
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB

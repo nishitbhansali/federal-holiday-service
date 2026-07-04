@@ -1,0 +1,30 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  # H2 In-Memory Database (predictable name for consistency)
+  datasource:
+    url: jdbc:h2:mem:holidaysdb
+  
+  # H2 Console for database inspection during development
+  h2:
+    console:
+      enabled: true
+  
+  # Show SQL queries for debugging
+  jpa:
+    show-sql: true
+
+# Development logging configuration
+logging:
+  level:
+    root: INFO
+    com.rbc.holidays: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{correlationId}] [%thread] %-5level %logger{36} - %msg%n"
+
+# JWT Configuration (DO NOT use this secret in production)
+jwt:
+  secret: rbc-federal-holidays-secret-key-must-be-at-least-256-bits-long-for-hs256
+  expiration-ms: 3600000  # 1 hour

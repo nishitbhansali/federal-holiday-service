@@ -1,0 +1,237 @@
+package com.rbc.holidays.service.impl;
+
+import com.rbc.holidays.dto.FileUploadResponse;
+import com.rbc.holidays.dto.HolidayRequest;
+import com.rbc.holidays.dto.HolidayResponse;
+import com.rbc.holidays.entity.FederalHoliday;
+import com.rbc.holidays.enums.Country;
+import com.rbc.holidays.exception.DuplicateHolidayException;
+import com.rbc.holidays.exception.HolidayNotFoundException;
+import com.rbc.holidays.exception.InvalidFileFormatException;
+import com.rbc.holidays.repository.HolidayRepository;
+import com.rbc.holidays.service.HolidayService;
+import com.rbc.holidays.util.FileParserUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class HolidayServiceImpl implements HolidayService {
+
+    private static final Logger logger = LoggerFactory.getLogger(HolidayServiceImpl.class);
+    private final HolidayRepository holidayRepository;
+
+    public HolidayServiceImpl(HolidayRepository holidayRepository) {
+        this.holidayRepository = holidayRepository;
+    }
+
+    @Override
+    public HolidayResponse createHoliday(HolidayRequest request) {
+        logger.info("Creating holiday: {} for country: {}", request.getHolidayName(), request.getCountry());
+
+        if (holidayRepository.existsByCountryAndHolidayDate(request.getCountry(), request.getHolidayDate())) {
+            throw new DuplicateHolidayException(
+                    String.format("Holiday already exists for %s on %s", 
+                            request.getCountry(), request.getHolidayDate()));
+        }
+
+        FederalHoliday holiday = mapToEntity(request);
+        FederalHoliday savedHoliday = holidayRepository.save(holiday);
+        
+        logger.info("Holiday created successfully with id: {}", savedHoliday.getId());
+        return mapToResponse(savedHoliday);
+    }
+
+    @Override
+    public HolidayResponse updateHoliday(Long id, HolidayRequest request) {
+        logger.info("Updating holiday with id: {}", id);
+
+        FederalHoliday existingHoliday = holidayRepository.findById(id)
+                .orElseThrow(() -> new HolidayNotFoundException(id));
+
+        if (!existingHoliday.getCountry().equals(request.getCountry()) || 
+            !existingHoliday.getHolidayDate().equals(request.getHolidayDate())) {
+            
+            if (holidayRepository.existsByCountryAndHolidayDate(request.getCountry(), request.getHolidayDate())) {
+                throw new DuplicateHolidayException(
+                        String.format("Holiday already exists for %s on %s", 
+                                request.getCountry(), request.getHolidayDate()));
+            }
+        }
+
+        existingHoliday.setHolidayName(request.getHolidayName());
+        existingHoliday.setHolidayDate(request.getHolidayDate());
+        existingHoliday.setCountry(request.getCountry());
+        existingHoliday.setIsRecurring(request.getIsRecurring() != null ? request.getIsRecurring() : true);
+        existingHoliday.setDescription(request.getDescription());
+
+        FederalHoliday updatedHoliday = holidayRepository.save(existingHoliday);
+        
+        logger.info("Holiday updated successfully with id: {}", updatedHoliday.getId());
+        return mapToResponse(updatedHoliday);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public HolidayResponse getHolidayById(Long id) {
+        logger.info("Fetching holiday with id: {}", id);
+
+        FederalHoliday holiday = holidayRepository.findById(id)
+                .orElseThrow(() -> new HolidayNotFoundException(id));
+
+        return mapToResponse(holiday);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HolidayResponse> getAllHolidays() {
+        logger.info("Fetching all holidays");
+
+        return holidayRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HolidayResponse> getHolidaysByCountry(Country country) {
+        logger.info("Fetching holidays for country: {}", country);
+
+        return holidayRepository.findByCountry(country).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HolidayResponse> getHolidaysByDateRange(LocalDate startDate, LocalDate endDate) {
+        logger.info("Fetching holidays between {} and {}", startDate, endDate);
+
+        return holidayRepository.findByHolidayDateBetween(startDate, endDate).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HolidayResponse> getHolidaysByCountryAndYear(Country country, Integer year) {
+        logger.info("Fetching holidays for country: {} and year: {}", country, year);
+
+        if (country != null && year != null) {
+            return holidayRepository.findByCountryAndYear(country, year).stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        } else if (country != null) {
+            return getHolidaysByCountry(country);
+        } else if (year != null) {
+            return holidayRepository.findByYear(year).stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+
+        return getAllHolidays();
+    }
+
+    @Override
+    public void deleteHoliday(Long id) {
+        logger.info("Deleting holiday with id: {}", id);
+
+        if (!holidayRepository.existsById(id)) {
+            throw new HolidayNotFoundException(id);
+        }
+
+        holidayRepository.deleteById(id);
+        logger.info("Holiday deleted successfully with id: {}", id);
+    }
+
+    @Override
+    public FileUploadResponse uploadHolidaysFromFile(MultipartFile file) {
+        logger.info("Processing file upload: {}", file.getOriginalFilename());
+
+        if (file.isEmpty()) {
+            throw new InvalidFileFormatException("File is empty");
+        }
+
+        String contentType = file.getContentType();
+        List<HolidayRequest> holidayRequests;
+
+        try {
+            if ("text/csv".equals(contentType)) {
+                holidayRequests = FileParserUtil.parseCsvFile(file);
+            } else if ("application/json".equals(contentType)) {
+                holidayRequests = FileParserUtil.parseJsonFile(file);
+            } else {
+                throw new InvalidFileFormatException(
+                        "Unsupported file format. Only CSV and JSON files are allowed.");
+            }
+        } catch (Exception e) {
+            throw new InvalidFileFormatException("Error parsing file: " + e.getMessage(), e);
+        }
+
+        int totalRecords = holidayRequests.size();
+        int successCount = 0;
+        List<String> errors = new ArrayList<>();
+
+        for (int i = 0; i < holidayRequests.size(); i++) {
+            HolidayRequest request = holidayRequests.get(i);
+            try {
+                if (!holidayRepository.existsByCountryAndHolidayDate(
+                        request.getCountry(), request.getHolidayDate())) {
+                    FederalHoliday holiday = mapToEntity(request);
+                    holidayRepository.save(holiday);
+                    successCount++;
+                } else {
+                    errors.add(String.format("Row %d: Holiday already exists for %s on %s",
+                            i + 1, request.getCountry(), request.getHolidayDate()));
+                }
+            } catch (Exception e) {
+                errors.add(String.format("Row %d: %s", i + 1, e.getMessage()));
+            }
+        }
+
+        int failureCount = totalRecords - successCount;
+        String message = String.format("File processed successfully. %d out of %d records imported.",
+                successCount, totalRecords);
+
+        logger.info("File upload completed. Success: {}, Failures: {}", successCount, failureCount);
+
+        return FileUploadResponse.builder()
+                .totalRecords(totalRecords)
+                .successCount(successCount)
+                .failureCount(failureCount)
+                .errors(errors)
+                .message(message)
+                .build();
+    }
+
+    private FederalHoliday mapToEntity(HolidayRequest request) {
+        return FederalHoliday.builder()
+                .holidayName(request.getHolidayName())
+                .holidayDate(request.getHolidayDate())
+                .country(request.getCountry())
+                .isRecurring(request.getIsRecurring() != null ? request.getIsRecurring() : true)
+                .description(request.getDescription())
+                .build();
+    }
+
+    private HolidayResponse mapToResponse(FederalHoliday holiday) {
+        return HolidayResponse.builder()
+                .id(holiday.getId())
+                .holidayName(holiday.getHolidayName())
+                .holidayDate(holiday.getHolidayDate())
+                .country(holiday.getCountry())
+                .isRecurring(holiday.getIsRecurring())
+                .description(holiday.getDescription())
+                .createdAt(holiday.getCreatedAt())
+                .updatedAt(holiday.getUpdatedAt())
+                .build();
+    }
+}

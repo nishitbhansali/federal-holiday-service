@@ -1,31 +1,53 @@
-# Federal Holidays Service
+# Federal Holidays API - Repository
 
-Enterprise-grade REST API for managing federal holidays with Spring Boot 3.5.0, JWT authentication, and clean architecture.
+This is a mono-repo containing the Federal Holidays API project for Royal Bank of Canada (RBC) interview.
 
-## Development Branch
+## Projects
 
-All development code is maintained in the `feature/nishit/federal-holiday-api` branch.
+### 📂 federal-holidays-api/
+Spring Boot REST API for managing US and Canada federal holidays with JWT authentication, correlation ID tracking, and bulk file upload support.
 
-To get started:
+**👉 See [federal-holidays-api/README.md](federal-holidays-api/README.md) for complete documentation**
+
+---
+
+## Quick Start
 
 ```bash
-git checkout feature/nishit/federal-holiday-api
+# Navigate to project
+cd federal-holidays-api
+
+# Build and run
+mvn spring-boot:run
+
+# Application starts on http://localhost:8080
 ```
 
-## Features
+---
 
-- 🔒 JWT-based authentication
-- 📋 Request correlation ID tracking
-- 🎯 Clean layered architecture
-- 🚀 Spring Boot 3.5.0 with Java 21
-- 💾 H2 (local) and PostgreSQL (production)
-- 🧪 Built-in test utilities
+## Repository Structure
 
-## Tech Stack
+```
+.
+├── .git/                         # Git repository
+├── federal-holidays-api/         # Main Spring Boot project
+│   ├── src/                     # Source code
+│   ├── test-data/               # Postman collection & test files
+│   ├── pom.xml                  # Maven configuration
+│   └── README.md                # 📖 Project documentation
+└── README.md                    # This file
+```
 
-- Java 21
-- Spring Boot 3.5.0
-- Spring Data JPA
-- Spring Security (JWT)
-- H2 / PostgreSQL
-- Maven
+---
+
+## Testing
+
+Import Postman collection for all 20 API endpoints:
+```
+federal-holidays-api/test-data/Federal-Holidays-API.postman_collection.json
+```
+
+---
+
+**Developer:** Nishit Bhansali  
+**Assignment:** Royal Bank of Canada (RBC)

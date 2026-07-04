@@ -1,0 +1,16 @@
+[
+  {
+    "holidayName": "Presidents Day",
+    "holidayDate": "2026-02-16",
+    "country": "USA",
+    "isRecurring": true,
+    "description": "Honors US presidents"
+  },
+  {
+    "holidayName": "Civic Holiday",
+    "holidayDate": "2026-08-03",
+    "country": "CANADA",
+    "isRecurring": true,
+    "description": "Provincial holiday"
+  }
+]

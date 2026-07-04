@@ -1,0 +1,601 @@
+{
+	"info": {
+		"_postman_id": "federal-holidays-api",
+		"name": "Federal Holidays API",
+		"description": "Complete API collection for Federal Holidays Service (USA and Canada)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/federal-holidays-api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "correlationId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Generate JWT Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Auto-save token and correlationId to collection variables",
+							"if (pm.response.code === 200) {",
+							"    const response = pm.response.json();",
+							"    pm.collectionVariables.set('token', response.token);",
+							"    pm.collectionVariables.set('correlationId', response.correlationId);",
+							"    console.log('Token saved:', response.token.substring(0, 20) + '...');",
+							"    console.log('Correlation ID saved:', response.correlationId);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/test/generate-token?userId=test-user",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "test", "generate-token"],
+					"query": [
+						{
+							"key": "userId",
+							"value": "test-user",
+							"description": "User ID to embed in token"
+						}
+					]
+				},
+				"description": "Generate a JWT token for testing (local profile only). Token and correlationId are auto-saved to collection variables."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Health Check",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/actuator/health",
+					"host": ["{{baseUrl}}"],
+					"path": ["actuator", "health"]
+				},
+				"description": "Health check endpoint (no authentication required)"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Create Holiday",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"holidayName\": \"Remembrance Day\",\n  \"holidayDate\": \"2026-11-11\",\n  \"country\": \"CANADA\",\n  \"isRecurring\": true,\n  \"description\": \"Commemorates the end of World War I and honors veterans\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays"]
+				},
+				"description": "Create a new federal holiday. Returns 201 on success."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get All Holidays (Default Pagination)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays?offset=0&limit=100",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays"],
+					"query": [
+						{
+							"key": "offset",
+							"value": "0",
+							"description": "Starting position (default: 0)"
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"description": "Maximum records to return (default: 100)"
+						}
+					]
+				},
+				"description": "Retrieve all federal holidays with pagination support. Default: offset=0, limit=100"
+			},
+			"response": []
+		},
+		{
+			"name": "4a. Get All Holidays (Custom Pagination)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays?offset=0&limit=10",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays"],
+					"query": [
+						{
+							"key": "offset",
+							"value": "0",
+							"description": "Starting position"
+						},
+						{
+							"key": "limit",
+							"value": "10",
+							"description": "Return first 10 records"
+						}
+					]
+				},
+				"description": "Example with custom pagination parameters"
+			},
+			"response": []
+		},
+		{
+			"name": "5. Get Holiday by ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays/1",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays", "1"]
+				},
+				"description": "Retrieve a specific holiday by ID"
+			},
+			"response": []
+		},
+		{
+			"name": "6. Search Holidays by Country",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays/search?country=USA",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays", "search"],
+					"query": [
+						{
+							"key": "country",
+							"value": "USA",
+							"description": "Filter by country (USA or CANADA)"
+						}
+					]
+				},
+				"description": "Search holidays by country using the unified search endpoint"
+			},
+			"response": []
+		},
+		{
+			"name": "7. Search Holidays by Year",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays/search?country=USA&year=2026",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays", "search"],
+					"query": [
+						{
+							"key": "country",
+							"value": "USA"
+						},
+						{
+							"key": "year",
+							"value": "2026"
+						}
+					]
+				},
+				"description": "Search holidays by country and/or year"
+			},
+			"response": []
+		},
+		{
+			"name": "8. Search Holidays by Date Range",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays/search?startDate=2026-07-01&endDate=2026-12-31",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays", "search"],
+					"query": [
+						{
+							"key": "startDate",
+							"value": "2026-07-01"
+						},
+						{
+							"key": "endDate",
+							"value": "2026-12-31"
+						}
+					]
+				},
+				"description": "Search holidays within a date range"
+			},
+			"response": []
+		},
+		{
+			"name": "9. Update Holiday",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"holidayName\": \"Independence Day (Updated)\",\n  \"holidayDate\": \"2026-07-04\",\n  \"country\": \"USA\",\n  \"isRecurring\": true,\n  \"description\": \"Celebrates the adoption of the Declaration of Independence on July 4, 1776\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays/1",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays", "1"]
+				},
+				"description": "Update an existing holiday by ID"
+			},
+			"response": []
+		},
+		{
+			"name": "9a. Upload Holidays (CSV)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "holidays.csv",
+							"description": "CSV file with columns: holidayName,holidayDate,country,isRecurring,description"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays/upload",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays", "upload"]
+				},
+				"description": "Bulk upload holidays from CSV file. Max size: 10MB. Returns FileUploadResponse with totalRecords, successCount, and errors list."
+			},
+			"response": []
+		},
+		{
+			"name": "9b. Upload Holidays (JSON)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "holidays.json",
+							"description": "JSON array of holiday objects"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays/upload",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays", "upload"]
+				},
+				"description": "Bulk upload holidays from JSON file. Max size: 10MB. FileUploadResponse includes calculated failureCount() method."
+			},
+			"response": []
+		},
+		{
+			"name": "10. Delete Holiday",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays/11",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays", "11"]
+				},
+				"description": "Delete a holiday by ID (returns 204 No Content)"
+			},
+			"response": []
+		},
+		{
+			"name": "Error - Missing Authorization",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays"]
+				},
+				"description": "Test missing Authorization header - expects 401 Unauthorized"
+			},
+			"response": []
+		},
+		{
+			"name": "Error - Missing Correlation ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays"]
+				},
+				"description": "Test missing X-Correlation-ID header - expects 400 Bad Request"
+			},
+			"response": []
+		},
+		{
+			"name": "Error - Invalid Token",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "invalid-token-12345",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays"]
+				},
+				"description": "Test invalid JWT token - expects 401 Unauthorized"
+			},
+			"response": []
+		},
+		{
+			"name": "Error - Invalid Country",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"holidayName\": \"Test Holiday\",\n  \"holidayDate\": \"2026-08-01\",\n  \"country\": \"MEXICO\",\n  \"isRecurring\": true,\n  \"description\": \"Invalid country test\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays"]
+				},
+				"description": "Test invalid country (only USA and CANADA supported) - expects 400 Bad Request"
+			},
+			"response": []
+		},
+		{
+			"name": "Error - Holiday Not Found",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays/99999",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays", "99999"]
+				},
+				"description": "Test non-existent holiday ID - expects 404 Not Found"
+			},
+			"response": []
+		},
+		{
+			"name": "Error - Duplicate Holiday",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"holidayName\": \"Duplicate Test\",\n  \"holidayDate\": \"2026-07-04\",\n  \"country\": \"USA\",\n  \"isRecurring\": true,\n  \"description\": \"Testing duplicate date constraint\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays"]
+				},
+				"description": "Test duplicate holiday (same country + date) - expects 409 Conflict. Run after creating a USA holiday on 2026-07-04."
+			},
+			"response": []
+		},
+		{
+			"name": "Error - Validation Failure",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Correlation-ID",
+						"value": "{{correlationId}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"holidayDate\": \"2026-10-01\",\n  \"country\": \"USA\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/holidays",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "holidays"]
+				},
+				"description": "Test missing required field (holidayName) - expects 400 Bad Request with validation error"
+			},
+			"response": []
+		}
+	]
+}

@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex, HttpServletRequest request) {
-        logger.error("Request validation error: {}", ex.getMessage());
+        logger.warn("Request validation error: {}", ex.getMessage());
         
         ErrorResponse errorResponse = createErrorResponse(
                 HttpStatus.BAD_REQUEST,
@@ -87,7 +87,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HolidayNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleHolidayNotFoundException(
             HolidayNotFoundException ex, HttpServletRequest request) {
-        logger.error("Holiday not found: {}", ex.getMessage());
+        logger.warn("Holiday not found: {}", ex.getMessage());
         
         ErrorResponse errorResponse = createErrorResponse(
                 HttpStatus.NOT_FOUND,
@@ -110,7 +110,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateHolidayException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateHolidayException(
             DuplicateHolidayException ex, HttpServletRequest request) {
-        logger.error("Duplicate holiday: {}", ex.getMessage());
+        logger.warn("Duplicate holiday: {}", ex.getMessage());
         
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(ZoneId.of("America/Toronto")),
@@ -135,7 +135,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCountryException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCountryException(
             InvalidCountryException ex, HttpServletRequest request) {
-        logger.error("Invalid country: {}", ex.getMessage());
+        logger.warn("Invalid country: {}", ex.getMessage());
         
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(ZoneId.of("America/Toronto")),
@@ -160,7 +160,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidFileFormatException.class)
     public ResponseEntity<ErrorResponse> handleInvalidFileFormatException(
             InvalidFileFormatException ex, HttpServletRequest request) {
-        logger.error("Invalid file format: {}", ex.getMessage());
+        logger.warn("Invalid file format: {}", ex.getMessage());
         
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(ZoneId.of("America/Toronto")),
@@ -186,7 +186,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
-        logger.error("Validation error: {}", ex.getMessage());
+        logger.warn("Validation error: {}", ex.getMessage());
         
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
@@ -216,7 +216,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
             DataIntegrityViolationException ex, HttpServletRequest request) {
-        logger.error("Data integrity violation: {}", ex.getMessage());
+        logger.warn("Data integrity violation: {}", ex.getMessage());
         
         String message = "A holiday already exists for this country on the specified date";
         
@@ -243,7 +243,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(
             MaxUploadSizeExceededException ex, HttpServletRequest request) {
-        logger.error("File size exceeded: {}", ex.getMessage());
+        logger.warn("File size exceeded: {}", ex.getMessage());
         
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(ZoneId.of("America/Toronto")),

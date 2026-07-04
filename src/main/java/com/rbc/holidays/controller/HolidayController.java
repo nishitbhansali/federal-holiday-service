@@ -111,7 +111,7 @@ public class HolidayController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<HolidayResponse> getHolidayById(@PathVariable Long id) {
-        logger.info("Fetching holiday with id: {}", id);
+        logger.debug("Fetching holiday with id: {}", id);
         HolidayResponse response = holidayService.getHolidayById(id);
         return ResponseEntity.ok(response);
     }
@@ -124,7 +124,7 @@ public class HolidayController {
      */
     @GetMapping
     public ResponseEntity<List<HolidayResponse>> getAllHolidays() {
-        logger.info("Fetching all holidays");
+        logger.debug("Fetching all holidays");
         List<HolidayResponse> response = holidayService.getAllHolidays();
         logger.debug("Retrieved {} holidays", response.size());
         return ResponseEntity.ok(response);
@@ -138,7 +138,7 @@ public class HolidayController {
      */
     @GetMapping("/country/{country}")
     public ResponseEntity<List<HolidayResponse>> getHolidaysByCountry(@PathVariable String country) {
-        logger.info("Fetching holidays for country: {}", country);
+        logger.debug("Fetching holidays for country: {}", country);
         List<HolidayResponse> response = holidayService.getHolidaysByCountry(country);
         logger.debug("Retrieved {} holidays for {}", response.size(), country);
         return ResponseEntity.ok(response);

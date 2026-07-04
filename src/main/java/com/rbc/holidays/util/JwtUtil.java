@@ -100,7 +100,7 @@ public class JwtUtil {
             
             return claims.getSubject();
         } catch (JwtException | IllegalArgumentException e) {
-            log.error("Failed to extract userId from token: {}", e.getMessage());
+            log.warn("Failed to extract userId from token: {}", e.getMessage());
             return null;
         }
     }

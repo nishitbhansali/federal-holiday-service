@@ -137,14 +137,14 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             RequestContext context = RequestContext.of(correlationId, userId, requestPath);
             RequestContextHolder.set(context);
             
-            log.info("Request validated - Path: {}, User: {}, CorrelationId: {}", 
+            log.debug("Request validated - Path: {}, User: {}, CorrelationId: {}", 
                     requestPath, userId, correlationId);
             
             // Step 7: Proceed with filter chain
             filterChain.doFilter(request, response);
             
             long duration = System.currentTimeMillis() - startTime;
-            log.info("Request completed - Path: {}, Duration: {}ms, Status: {}", 
+            log.debug("Request completed - Path: {}, Duration: {}ms, Status: {}", 
                     requestPath, duration, response.getStatus());
             
         } catch (Exception ex) {

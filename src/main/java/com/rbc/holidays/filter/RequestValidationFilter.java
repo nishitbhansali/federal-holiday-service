@@ -55,7 +55,6 @@ public class RequestValidationFilter extends OncePerRequestFilter {
     // Header constants
     private static final String HEADER_CORRELATION_ID = "X-Correlation-ID";
     private static final String HEADER_AUTHORIZATION = "Authorization";
-    private static final String HEADER_PLATFORM = "X-Platform";
     
     // MDC key for correlation ID (used in log pattern)
     private static final String MDC_CORRELATION_ID = "correlationId";
@@ -78,6 +77,15 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         this.handlerExceptionResolver = handlerExceptionResolver;
     }
     
+    /**
+     * Validates and processes incoming HTTP requests before they reach controllers.
+     * 
+     * @param request HTTP servlet request
+     * @param response HTTP servlet response
+     * @param filterChain Filter chain for request processing
+     * @throws ServletException if servlet processing fails
+     * @throws IOException if I/O error occurs
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -125,20 +133,14 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 throw new IllegalArgumentException("Failed to extract user ID from JWT token");
             }
             
-            // Step 6: Extract platform (optional)
-            String platform = request.getHeader(HEADER_PLATFORM);
-            if (platform == null || platform.isBlank()) {
-                platform = "unknown";
-            }
-            
-            // Step 7: Create and set RequestContext
-            RequestContext context = new RequestContext(correlationId, userId, platform, requestPath);
+            // Step 6: Create and set RequestContext (platform defaults to 'unknown')
+            RequestContext context = RequestContext.of(correlationId, userId, requestPath);
             RequestContextHolder.set(context);
             
-            log.info("Request validated - Path: {}, User: {}, CorrelationId: {}, Platform: {}", 
-                    requestPath, userId, correlationId, platform);
+            log.info("Request validated - Path: {}, User: {}, CorrelationId: {}", 
+                    requestPath, userId, correlationId);
             
-            // Step 8: Proceed with filter chain
+            // Step 7: Proceed with filter chain
             filterChain.doFilter(request, response);
             
             long duration = System.currentTimeMillis() - startTime;
@@ -150,7 +152,7 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             // Delegate to global exception handler
             handlerExceptionResolver.resolveException(request, response, null, ex);
         } finally {
-            // Step 9: Clean up ThreadLocal and MDC to prevent memory leaks
+            // Step 8: Clean up ThreadLocal and MDC to prevent memory leaks
             RequestContextHolder.clear();
             MDC.remove(MDC_CORRELATION_ID);
         }

@@ -15,6 +15,8 @@ spring:
   # Show SQL queries for debugging
   jpa:
     show-sql: true
+    # Defer data.sql execution until AFTER Hibernate creates the schema
+    defer-datasource-initialization: true
 
 # Development logging configuration
 logging:

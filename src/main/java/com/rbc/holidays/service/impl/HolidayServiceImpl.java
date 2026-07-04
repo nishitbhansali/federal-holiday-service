@@ -35,12 +35,12 @@ public class HolidayServiceImpl implements HolidayService {
 
     @Override
     public HolidayResponse createHoliday(HolidayRequest request) {
-        logger.info("Creating holiday: {} for country: {}", request.getHolidayName(), request.getCountry());
+        logger.info("Creating holiday: {} for country: {}", request.holidayName(), request.country());
 
-        if (holidayRepository.existsByCountryAndHolidayDate(request.getCountry(), request.getHolidayDate())) {
+        if (holidayRepository.existsByCountryAndHolidayDate(request.country(), request.holidayDate())) {
             throw new DuplicateHolidayException(
                     String.format("Holiday already exists for %s on %s", 
-                            request.getCountry(), request.getHolidayDate()));
+                            request.country(), request.holidayDate()));
         }
 
         FederalHoliday holiday = mapToEntity(request);
@@ -57,21 +57,21 @@ public class HolidayServiceImpl implements HolidayService {
         FederalHoliday existingHoliday = holidayRepository.findById(id)
                 .orElseThrow(() -> new HolidayNotFoundException(id));
 
-        if (!existingHoliday.getCountry().equals(request.getCountry()) || 
-            !existingHoliday.getHolidayDate().equals(request.getHolidayDate())) {
+        if (!existingHoliday.getCountry().equals(request.country()) || 
+            !existingHoliday.getHolidayDate().equals(request.holidayDate())) {
             
-            if (holidayRepository.existsByCountryAndHolidayDate(request.getCountry(), request.getHolidayDate())) {
+            if (holidayRepository.existsByCountryAndHolidayDate(request.country(), request.holidayDate())) {
                 throw new DuplicateHolidayException(
                         String.format("Holiday already exists for %s on %s", 
-                                request.getCountry(), request.getHolidayDate()));
+                                request.country(), request.holidayDate()));
             }
         }
 
-        existingHoliday.setHolidayName(request.getHolidayName());
-        existingHoliday.setHolidayDate(request.getHolidayDate());
-        existingHoliday.setCountry(request.getCountry());
-        existingHoliday.setIsRecurring(request.getIsRecurring() != null ? request.getIsRecurring() : true);
-        existingHoliday.setDescription(request.getDescription());
+        existingHoliday.setHolidayName(request.holidayName());
+        existingHoliday.setHolidayDate(request.holidayDate());
+        existingHoliday.setCountry(request.country());
+        existingHoliday.setIsRecurring(request.isRecurring() != null ? request.isRecurring() : true);
+        existingHoliday.setDescription(request.description());
 
         FederalHoliday updatedHoliday = holidayRepository.save(existingHoliday);
         
@@ -184,13 +184,13 @@ public class HolidayServiceImpl implements HolidayService {
             HolidayRequest request = holidayRequests.get(i);
             try {
                 if (!holidayRepository.existsByCountryAndHolidayDate(
-                        request.getCountry(), request.getHolidayDate())) {
+                        request.country(), request.holidayDate())) {
                     FederalHoliday holiday = mapToEntity(request);
                     holidayRepository.save(holiday);
                     successCount++;
                 } else {
                     errors.add(String.format("Row %d: Holiday already exists for %s on %s",
-                            i + 1, request.getCountry(), request.getHolidayDate()));
+                            i + 1, request.country(), request.holidayDate()));
                 }
             } catch (Exception e) {
                 errors.add(String.format("Row %d: %s", i + 1, e.getMessage()));
@@ -203,35 +203,35 @@ public class HolidayServiceImpl implements HolidayService {
 
         logger.info("File upload completed. Success: {}, Failures: {}", successCount, failureCount);
 
-        return FileUploadResponse.builder()
-                .totalRecords(totalRecords)
-                .successCount(successCount)
-                .failureCount(failureCount)
-                .errors(errors)
-                .message(message)
-                .build();
+        return new FileUploadResponse(
+                totalRecords,
+                successCount,
+                failureCount,
+                errors,
+                message
+        );
     }
 
     private FederalHoliday mapToEntity(HolidayRequest request) {
         return FederalHoliday.builder()
-                .holidayName(request.getHolidayName())
-                .holidayDate(request.getHolidayDate())
-                .country(request.getCountry())
-                .isRecurring(request.getIsRecurring() != null ? request.getIsRecurring() : true)
-                .description(request.getDescription())
+                .holidayName(request.holidayName())
+                .holidayDate(request.holidayDate())
+                .country(request.country())
+                .isRecurring(request.isRecurring() != null ? request.isRecurring() : true)
+                .description(request.description())
                 .build();
     }
 
     private HolidayResponse mapToResponse(FederalHoliday holiday) {
-        return HolidayResponse.builder()
-                .id(holiday.getId())
-                .holidayName(holiday.getHolidayName())
-                .holidayDate(holiday.getHolidayDate())
-                .country(holiday.getCountry())
-                .isRecurring(holiday.getIsRecurring())
-                .description(holiday.getDescription())
-                .createdAt(holiday.getCreatedAt())
-                .updatedAt(holiday.getUpdatedAt())
-                .build();
+        return new HolidayResponse(
+                holiday.getId(),
+                holiday.getHolidayName(),
+                holiday.getHolidayDate(),
+                holiday.getCountry(),
+                holiday.getIsRecurring(),
+                holiday.getDescription(),
+                holiday.getCreatedAt(),
+                holiday.getUpdatedAt()
+        );
     }
 }

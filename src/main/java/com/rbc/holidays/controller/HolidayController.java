@@ -92,11 +92,11 @@ public class HolidayController {
     public ResponseEntity<HolidayResponse> createHoliday(@Valid @RequestBody HolidayRequest request) {
         RequestContext context = RequestContextHolder.get();
         logger.info("User '{}' creating holiday: {} on {} for {}", 
-                   context.userId(), request.getHolidayName(), request.getHolidayDate(), request.getCountry());
+                   context.userId(), request.holidayName(), request.holidayDate(), request.country());
         
         HolidayResponse response = holidayService.createHoliday(request);
         
-        logger.info("Holiday created successfully with id: {}", response.getId());
+        logger.info("Holiday created successfully with id: {}", response.id());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -125,7 +125,7 @@ public class HolidayController {
             @Valid @RequestBody HolidayRequest request) {
         RequestContext context = RequestContextHolder.get();
         logger.info("User '{}' updating holiday id: {} to '{}' on {}", 
-                   context.userId(), id, request.getHolidayName(), request.getHolidayDate());
+                   context.userId(), id, request.holidayName(), request.holidayDate());
         
         HolidayResponse response = holidayService.updateHoliday(id, request);
         
@@ -278,7 +278,7 @@ public class HolidayController {
         FileUploadResponse response = holidayService.uploadHolidaysFromFile(file);
         
         logger.info("File upload completed - Total: {}, Success: {}, Failed: {}", 
-                   response.getTotalRecords(), response.getSuccessCount(), response.getFailureCount());
+                   response.totalRecords(), response.successCount(), response.failureCount());
         return ResponseEntity.ok(response);
     }
 }

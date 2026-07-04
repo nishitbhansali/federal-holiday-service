@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.Map;
 
 /**
  * Utility class for JWT token generation and validation.
@@ -48,17 +47,6 @@ public class JwtUtil {
      * @return JWT token string
      */
     public String generateToken(String userId) {
-        return generateToken(userId, Map.of());
-    }
-    
-    /**
-     * Generates a JWT token with custom claims.
-     * 
-     * @param userId User identifier (subject)
-     * @param claims Additional claims to include
-     * @return JWT token string
-     */
-    public String generateToken(String userId, Map<String, Object> claims) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs);
         
@@ -66,7 +54,6 @@ public class JwtUtil {
         
         String token = Jwts.builder()
                 .subject(userId)
-                .claims(claims)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key, Jwts.SIG.HS256)
@@ -117,37 +104,18 @@ public class JwtUtil {
             return null;
         }
     }
-    
+
     /**
-     * Extracts all claims from JWT token.
-     * 
-     * @param token JWT token
-     * @return Claims object or null if extraction fails
-     */
-    public Claims getClaimsFromToken(String token) {
-        try {
-            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-            return Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-        } catch (JwtException | IllegalArgumentException e) {
-            log.error("Failed to extract claims from token: {}", e.getMessage());
-            return null;
-        }
-    }
-    
-    /**
-     * Extracts token from Authorization header (removes "Bearer " prefix).
-     * 
+     * Extracts the raw JWT token from a Bearer authorization header.
+     *
      * @param authHeader Authorization header value
-     * @return JWT token string or null if invalid format
+     * @return JWT token without the Bearer prefix, or null when the format is invalid
      */
     public String extractTokenFromHeader(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
+
         log.warn("Invalid Authorization header format - expected 'Bearer <token>'");
         return null;
     }

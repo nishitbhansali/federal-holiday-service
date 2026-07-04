@@ -19,8 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,40 +33,37 @@ import java.util.stream.Collectors;
 public class HolidayServiceImpl implements HolidayService {
 
     private static final Logger logger = LoggerFactory.getLogger(HolidayServiceImpl.class);
-    private final HolidayRepository holidayRepository;
-    
-    @Value("#{'${holidays.supported-countries}'.split(',')}")
-    private List<String> supportedCountries;
+    private static final String CONTENT_TYPE_CSV = "text/csv";
+    private static final String CONTENT_TYPE_JSON = "application/json";
+    private static final int MIN_YEAR = 1900;
+    private static final int MAX_YEAR = 2100;
+    private static final int MAX_UPLOAD_RECORDS = 1000;
 
-    public HolidayServiceImpl(HolidayRepository holidayRepository) {
+    private final HolidayRepository holidayRepository;
+    private final Set<String> supportedCountries;
+
+    public HolidayServiceImpl(
+            HolidayRepository holidayRepository,
+            @Value("${holidays.supported-countries}") String supportedCountriesProperty) {
         this.holidayRepository = holidayRepository;
-    }
-    
-    /**
-     * Validates that the country is in the supported countries list.
-     * 
-     * @param country Country code to validate
-     * @throws InvalidCountryException if country is not supported
-     */
-    private void validateCountry(String country) {
-        if (!supportedCountries.contains(country)) {
-            throw new InvalidCountryException(country, String.join(", ", supportedCountries));
-        }
+        this.supportedCountries = Arrays.stream(supportedCountriesProperty.split(","))
+                .map(String::trim)
+                .map(country -> country.toUpperCase(Locale.ROOT))
+                .collect(Collectors.toCollection(HashSet::new));
     }
 
     @Override
     public HolidayResponse createHoliday(HolidayRequest request) {
-        logger.info("Creating holiday: {} for country: {}", request.holidayName(), request.country());
-        
-        validateCountry(request.country());
+        String country = normalizeAndValidateCountry(request.country());
+        logger.info("Creating holiday: {} for country: {}", request.holidayName(), country);
 
-        if (holidayRepository.existsByCountryAndHolidayDate(request.country(), request.holidayDate())) {
+        if (holidayRepository.existsByCountryAndHolidayDate(country, request.holidayDate())) {
             throw new DuplicateHolidayException(
                     String.format("Holiday already exists for %s on %s", 
-                            request.country(), request.holidayDate()));
+                            country, request.holidayDate()));
         }
 
-        FederalHoliday holiday = mapToEntity(request);
+        FederalHoliday holiday = mapToEntity(request, country);
         FederalHoliday savedHoliday = holidayRepository.save(holiday);
         
         logger.info("Holiday created successfully with id: {}", savedHoliday.getId());
@@ -70,26 +72,21 @@ public class HolidayServiceImpl implements HolidayService {
 
     @Override
     public HolidayResponse updateHoliday(Long id, HolidayRequest request) {
+        String country = normalizeAndValidateCountry(request.country());
         logger.info("Updating holiday with id: {}", id);
-        
-        validateCountry(request.country());
 
         FederalHoliday existingHoliday = holidayRepository.findById(id)
                 .orElseThrow(() -> new HolidayNotFoundException(id));
 
-        if (!existingHoliday.getCountry().equals(request.country()) || 
-            !existingHoliday.getHolidayDate().equals(request.holidayDate())) {
-            
-            if (holidayRepository.existsByCountryAndHolidayDate(request.country(), request.holidayDate())) {
-                throw new DuplicateHolidayException(
-                        String.format("Holiday already exists for %s on %s", 
-                                request.country(), request.holidayDate()));
-            }
+        if (holidayRepository.existsByCountryAndHolidayDateAndIdNot(country, request.holidayDate(), id)) {
+            throw new DuplicateHolidayException(
+                String.format("Holiday already exists for %s on %s", 
+                    country, request.holidayDate()));
         }
 
         existingHoliday.setHolidayName(request.holidayName());
         existingHoliday.setHolidayDate(request.holidayDate());
-        existingHoliday.setCountry(request.country());
+        existingHoliday.setCountry(country);
         existingHoliday.setIsRecurring(request.isRecurring() != null ? request.isRecurring() : true);
         existingHoliday.setDescription(request.description());
 
@@ -123,9 +120,10 @@ public class HolidayServiceImpl implements HolidayService {
     @Override
     @Transactional(readOnly = true)
     public List<HolidayResponse> getHolidaysByCountry(String country) {
-        logger.info("Fetching holidays for country: {}", country);
+        String normalizedCountry = normalizeAndValidateCountry(country);
+        logger.info("Fetching holidays for country: {}", normalizedCountry);
 
-        return holidayRepository.findByCountry(country).stream()
+        return holidayRepository.findByCountry(normalizedCountry).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -133,6 +131,7 @@ public class HolidayServiceImpl implements HolidayService {
     @Override
     @Transactional(readOnly = true)
     public List<HolidayResponse> getHolidaysByDateRange(LocalDate startDate, LocalDate endDate) {
+        validateDateRange(startDate, endDate);
         logger.info("Fetching holidays between {} and {}", startDate, endDate);
 
         return holidayRepository.findByHolidayDateBetween(startDate, endDate).stream()
@@ -143,14 +142,18 @@ public class HolidayServiceImpl implements HolidayService {
     @Override
     @Transactional(readOnly = true)
     public List<HolidayResponse> getHolidaysByCountryAndYear(String country, Integer year) {
-        logger.info("Fetching holidays for country: {} and year: {}", country, year);
+        String normalizedCountry = country == null ? null : normalizeAndValidateCountry(country);
+        if (year != null) {
+            validateYear(year);
+        }
+        logger.info("Fetching holidays for country: {} and year: {}", normalizedCountry, year);
 
-        if (country != null && year != null) {
-            return holidayRepository.findByCountryAndYear(country, year).stream()
+        if (normalizedCountry != null && year != null) {
+            return holidayRepository.findByCountryAndYear(normalizedCountry, year).stream()
                     .map(this::mapToResponse)
                     .collect(Collectors.toList());
-        } else if (country != null) {
-            return getHolidaysByCountry(country);
+        } else if (normalizedCountry != null) {
+            return getHolidaysByCountry(normalizedCountry);
         } else if (year != null) {
             return holidayRepository.findByYear(year).stream()
                     .map(this::mapToResponse)
@@ -180,20 +183,16 @@ public class HolidayServiceImpl implements HolidayService {
             throw new InvalidFileFormatException("File is empty");
         }
 
-        String contentType = file.getContentType();
-        List<HolidayRequest> holidayRequests;
+        List<HolidayRequest> holidayRequests = parseHolidayRequestsFromFile(file);
 
-        try {
-            if ("text/csv".equals(contentType)) {
-                holidayRequests = FileParserUtil.parseCsvFile(file);
-            } else if ("application/json".equals(contentType)) {
-                holidayRequests = FileParserUtil.parseJsonFile(file);
-            } else {
-                throw new InvalidFileFormatException(
-                        "Unsupported file format. Only CSV and JSON files are allowed.");
-            }
-        } catch (Exception e) {
-            throw new InvalidFileFormatException("Error parsing file: " + e.getMessage(), e);
+        if (holidayRequests.isEmpty()) {
+            throw new InvalidFileFormatException("File contains no valid holiday records");
+        }
+
+        if (holidayRequests.size() > MAX_UPLOAD_RECORDS) {
+            throw new InvalidFileFormatException(
+                    String.format("File contains %d records. Maximum allowed is %d", 
+                            holidayRequests.size(), MAX_UPLOAD_RECORDS));
         }
 
         int totalRecords = holidayRequests.size();
@@ -201,19 +200,8 @@ public class HolidayServiceImpl implements HolidayService {
         List<String> errors = new ArrayList<>();
 
         for (int i = 0; i < holidayRequests.size(); i++) {
-            HolidayRequest request = holidayRequests.get(i);
-            try {
-                if (!holidayRepository.existsByCountryAndHolidayDate(
-                        request.country(), request.holidayDate())) {
-                    FederalHoliday holiday = mapToEntity(request);
-                    holidayRepository.save(holiday);
-                    successCount++;
-                } else {
-                    errors.add(String.format("Row %d: Holiday already exists for %s on %s",
-                            i + 1, request.country(), request.holidayDate()));
-                }
-            } catch (Exception e) {
-                errors.add(String.format("Row %d: %s", i + 1, e.getMessage()));
+            if (processUploadRow(i + 1, holidayRequests.get(i), errors)) {
+                successCount++;
             }
         }
 
@@ -232,16 +220,141 @@ public class HolidayServiceImpl implements HolidayService {
         );
     }
 
-    private FederalHoliday mapToEntity(HolidayRequest request) {
+    /**
+     * Parses holiday records from uploaded file based on content type.
+     * Supports CSV (text/csv) and JSON (application/json) formats.
+     * 
+     * @param file Uploaded multipart file
+     * @return List of parsed holiday requests
+     * @throws InvalidFileFormatException if file format is unsupported or parsing fails
+     */
+    private List<HolidayRequest> parseHolidayRequestsFromFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        try {
+            if (CONTENT_TYPE_CSV.equals(contentType)) {
+                return FileParserUtil.parseCsvFile(file);
+            }
+            if (CONTENT_TYPE_JSON.equals(contentType)) {
+                return FileParserUtil.parseJsonFile(file);
+            }
+            throw new InvalidFileFormatException(
+                    "Unsupported file format. Only CSV and JSON files are allowed.");
+        } catch (Exception e) {
+            throw new InvalidFileFormatException("Error parsing file: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Processes a single row from file upload.
+     * Validates country, checks for duplicates, and saves if valid.
+     * 
+     * @param rowNumber Row number for error reporting (1-based)
+     * @param request Holiday request from file
+     * @param errors List to accumulate error messages
+     * @return true if row processed successfully, false otherwise
+     */
+    private boolean processUploadRow(int rowNumber, HolidayRequest request, List<String> errors) {
+        try {
+            String country = normalizeAndValidateCountry(request.country());
+            if (holidayRepository.existsByCountryAndHolidayDate(country, request.holidayDate())) {
+                errors.add(String.format("Row %d: Holiday already exists for %s on %s",
+                        rowNumber, country, request.holidayDate()));
+                return false;
+            }
+
+            holidayRepository.save(mapToEntity(request, country));
+            return true;
+        } catch (Exception e) {
+            errors.add(String.format("Row %d: %s", rowNumber, e.getMessage()));
+            return false;
+        }
+    }
+
+    /**
+     * Normalizes and validates a country code.
+     * Trims whitespace, converts to uppercase, and checks against supported countries.
+     * 
+     * @param country Country code to validate
+     * @return Normalized country code (uppercase, trimmed)
+     * @throws InvalidCountryException if country is null, blank, or not supported
+     */
+    private String normalizeAndValidateCountry(String country) {
+        if (country == null || country.isBlank()) {
+            throw new InvalidCountryException(String.valueOf(country), String.join(", ", getSupportedCountriesForMessage()));
+        }
+
+        String normalized = country.trim().toUpperCase(Locale.ROOT);
+        if (!supportedCountries.contains(normalized)) {
+            throw new InvalidCountryException(normalized, String.join(", ", getSupportedCountriesForMessage()));
+        }
+
+        return normalized;
+    }
+
+    /**
+     * Gets a sorted list of supported countries for error messages.
+     * 
+     * @return Sorted list of supported country codes
+     */
+    private List<String> getSupportedCountriesForMessage() {
+        List<String> sortedCountries = new ArrayList<>(supportedCountries);
+        Collections.sort(sortedCountries);
+        return sortedCountries;
+    }
+
+    /**
+     * Validates that start and end dates are both provided and startDate <= endDate.
+     * 
+     * @param startDate Start date
+     * @param endDate End date
+     * @throws IllegalArgumentException if validation fails
+     */
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("Both startDate and endDate must be provided for date range search");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException(
+                    String.format("Start date %s cannot be after end date %s", startDate, endDate));
+        }
+    }
+
+    /**
+     * Validates that the year is within acceptable bounds.
+     * 
+     * @param year Year to validate
+     * @throws IllegalArgumentException if year is out of bounds
+     */
+    private void validateYear(Integer year) {
+        if (year < MIN_YEAR || year > MAX_YEAR) {
+            throw new IllegalArgumentException(
+                    String.format("Year must be between %d and %d", MIN_YEAR, MAX_YEAR));
+        }
+    }
+
+    /**
+     * Maps a holiday request DTO to a FederalHoliday entity.
+     * 
+     * @param request Holiday request DTO
+     * @param normalizedCountry Already validated and normalized country code
+     * @return FederalHoliday entity ready for persistence
+     */
+    private FederalHoliday mapToEntity(HolidayRequest request, String normalizedCountry) {
         return FederalHoliday.builder()
                 .holidayName(request.holidayName())
                 .holidayDate(request.holidayDate())
-                .country(request.country())
+                .country(normalizedCountry)
                 .isRecurring(request.isRecurring() != null ? request.isRecurring() : true)
                 .description(request.description())
                 .build();
     }
 
+    /**
+     * Maps a FederalHoliday entity to a response DTO.
+     * 
+     * @param holiday FederalHoliday entity
+     * @return HolidayResponse DTO for API response
+     */
     private HolidayResponse mapToResponse(FederalHoliday holiday) {
         return new HolidayResponse(
                 holiday.getId(),

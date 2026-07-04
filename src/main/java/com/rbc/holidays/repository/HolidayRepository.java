@@ -54,6 +54,17 @@ public interface HolidayRepository extends JpaRepository<FederalHoliday, Long> {
     boolean existsByCountryAndHolidayDate(String country, LocalDate holidayDate);
 
     /**
+     * Checks if a holiday exists for a country and date excluding a specific holiday ID.
+     * Used during update operations to avoid self-conflict.
+     *
+     * @param country Country code to check
+     * @param holidayDate Date to check
+     * @param id Holiday ID to exclude from duplicate check
+     * @return true if another holiday exists with same country and date, false otherwise
+     */
+    boolean existsByCountryAndHolidayDateAndIdNot(String country, LocalDate holidayDate, Long id);
+
+    /**
      * Finds all holidays within a date range.
      * 
      * @param startDate Start date (inclusive)
@@ -61,21 +72,6 @@ public interface HolidayRepository extends JpaRepository<FederalHoliday, Long> {
      * @return List of holidays in the date range
      */
     List<FederalHoliday> findByHolidayDateBetween(LocalDate startDate, LocalDate endDate);
-
-    /**
-     * Finds holidays for a specific country within a date range.
-     * Custom JPQL query for combined filtering.
-     * 
-     * @param country Country code to filter by
-     * @param startDate Start date (inclusive)
-     * @param endDate End date (inclusive)
-     * @return List of holidays matching criteria
-     */
-    @Query("SELECT h FROM FederalHoliday h WHERE h.country = :country AND h.holidayDate BETWEEN :startDate AND :endDate")
-    List<FederalHoliday> findByCountryAndDateRange(
-            @Param("country") String country,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
 
     /**
      * Finds all holidays in a specific year.

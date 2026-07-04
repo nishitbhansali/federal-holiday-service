@@ -33,6 +33,27 @@ public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
+     * Helper method to create standardized error responses.
+     * Reduces code duplication across exception handlers.
+     * 
+     * @param status HTTP status
+     * @param code Custom error code (e.g., "RBC_VALIDATION_ERROR")
+     * @param message Error message
+     * @param path Request URI path
+     * @return ErrorResponse with consistent structure
+     */
+    private ErrorResponse createErrorResponse(HttpStatus status, String code, String message, String path) {
+        return new ErrorResponse(
+                LocalDateTime.now(ZoneId.of("America/Toronto")),
+                status.value(),
+                status.getReasonPhrase(),
+                code,
+                message,
+                path
+        );
+    }
+
+    /**
      * Handles request validation errors from filter layer.
      * Triggered when required headers are missing or invalid (correlationId, Authorization).
      * 
@@ -45,10 +66,8 @@ public class GlobalExceptionHandler {
             IllegalArgumentException ex, HttpServletRequest request) {
         logger.error("Request validation error: {}", ex.getMessage());
         
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(ZoneId.of("America/Toronto")),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+        ErrorResponse errorResponse = createErrorResponse(
+                HttpStatus.BAD_REQUEST,
                 "RBC_VALIDATION_ERROR",
                 ex.getMessage(),
                 request.getRequestURI()
@@ -70,10 +89,8 @@ public class GlobalExceptionHandler {
             HolidayNotFoundException ex, HttpServletRequest request) {
         logger.error("Holiday not found: {}", ex.getMessage());
         
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(ZoneId.of("America/Toronto")),
-                HttpStatus.NOT_FOUND.value(),
-                HttpStatus.NOT_FOUND.getReasonPhrase(),
+        ErrorResponse errorResponse = createErrorResponse(
+                HttpStatus.NOT_FOUND,
                 "RBC_HOLIDAY_NOT_FOUND",
                 ex.getMessage(),
                 request.getRequestURI()

@@ -1,16 +1,16 @@
 [
   {
-    "holidayName": "Presidents Day",
-    "holidayDate": "2026-02-16",
+    "holidayName": "Indigenous Peoples Day",
+    "holidayDate": "2027-10-11",
     "country": "USA",
     "isRecurring": true,
-    "description": "Honors US presidents"
+    "description": "Celebrates Indigenous American peoples and cultures"
   },
   {
     "holidayName": "Civic Holiday",
-    "holidayDate": "2026-08-03",
+    "holidayDate": "2027-08-02",
     "country": "CANADA",
     "isRecurring": true,
-    "description": "Provincial holiday"
+    "description": "Provincial holiday celebrated in most provinces"
   }
 ]

@@ -136,7 +136,11 @@ Import the pre-configured Postman collection with all 20 endpoints:
 ### Request Headers (Required)
 
 - **Authorization:** `Bearer <JWT_TOKEN>`
-- **X-Correlation-ID:** `<UUID>` (for request tracking)
+- **X-Correlation-ID:** `<UUID>` (for request tracking - echoed back in response headers)
+
+### Response Headers
+
+- **X-Correlation-ID:** Same UUID from request (for distributed tracing)
 
 ### Supported Countries
 
@@ -222,7 +226,7 @@ federal-holidays-api/
 ## Key Features
 
 - **JWT Authentication** - All endpoints require Bearer token (generate via `/api/v1/test/generate-token`)
-- **Correlation ID Tracking** - Required `X-Correlation-ID` header (UUID) for request tracing
+- **Correlation ID Tracking** - Required `X-Correlation-ID` header (UUID) echoed back in response for distributed tracing
 - **Country Normalization** - "usa"/"US" → "USA", "canada" → "CANADA"
 - **Unique Constraint** - One holiday per country per date (409 Conflict on duplicate)
 - **Pagination** - `?offset=0&limit=100` (default)

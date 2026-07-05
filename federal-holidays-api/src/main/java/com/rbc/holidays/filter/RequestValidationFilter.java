@@ -108,10 +108,13 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             RequestContext context = new RequestContext(correlationId, userId, requestPath);
             RequestContextHolder.set(context);
             
+            // Step 7: Echo correlation ID back in response header for client tracking
+            response.setHeader(HEADER_CORRELATION_ID, correlationId);
+            
             log.debug("Request validated - Path: {}, User: {}, CorrelationId: {}", 
                     requestPath, userId, correlationId);
             
-            // Step 7: Proceed with filter chain
+            // Step 8: Proceed with filter chain
             filterChain.doFilter(request, response);
             
             long duration = System.currentTimeMillis() - startTime;
@@ -123,7 +126,7 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             // Delegate to global exception handler
             handlerExceptionResolver.resolveException(request, response, null, ex);
         } finally {
-            // Step 8: Clean up ThreadLocal and MDC to prevent memory leaks
+            // Step 9: Clean up ThreadLocal and MDC to prevent memory leaks
             RequestContextHolder.clear();
             MDC.remove(MDC_CORRELATION_ID);
         }

@@ -21,30 +21,8 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Request validation and context initialization filter.
- * Executes with HIGHEST_PRECEDENCE to ensure all requests are validated before reaching controllers.
- * 
- * Responsibilities:
- * 1. Validate required HTTP headers (X-Correlation-ID, Authorization)
- * 2. Validate JWT token and extract user ID
- * 3. Initialize RequestContext with request metadata
- * 4. Set correlation ID in MDC for log tracing
- * 5. Track request execution time
- * 6. Centralized exception handling via HandlerExceptionResolver
- * 7. Clean up ThreadLocal resources in finally block
- * 
- * Filter Execution Order:
- * - @Order(HIGHEST_PRECEDENCE) ensures this runs before all other filters
- * - Bypasses validation for health check and actuator endpoints
- * 
- * Thread Safety:
- * - Uses ThreadLocal (RequestContextHolder) for thread-safe context storage
- * - MDC (Mapped Diagnostic Context) for correlation ID in logs
- * 
- * Design Pattern:
- * - Extends OncePerRequestFilter (Spring guarantee: one execution per request)
- * - Delegates exception handling to Spring's HandlerExceptionResolver
- * - Follows separation of concerns: validation logic in filter, business logic in service
+ * Validates JWT/headers, initializes RequestContext, sets MDC correlation ID.
+ * Runs with HIGHEST_PRECEDENCE before all other filters.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -78,15 +56,6 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         this.handlerExceptionResolver = handlerExceptionResolver;
     }
     
-    /**
-     * Validates and processes incoming HTTP requests before they reach controllers.
-     * 
-     * @param request HTTP servlet request
-     * @param response HTTP servlet response
-     * @param filterChain Filter chain for request processing
-     * @throws ServletException if servlet processing fails
-     * @throws IOException if I/O error occurs
-     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -160,15 +129,6 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         }
     }
     
-    /**
-     * Validates correlation ID header.
-     * - Must be present
-     * - Must be valid UUID format (36 characters)
-     * 
-     * @param request HTTP request
-     * @return Validated correlation ID
-     * @throws IllegalArgumentException if validation fails
-     */
     private String validateAndExtractCorrelationId(HttpServletRequest request) {
         String correlationId = request.getHeader(HEADER_CORRELATION_ID);
         
@@ -193,12 +153,6 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         return correlationId;
     }
     
-    /**
-     * Determines if the request path should bypass authentication.
-     * 
-     * @param requestPath Request URI path
-     * @return true if path should bypass validation
-     */
     private boolean shouldBypass(String requestPath) {
         for (String bypassPath : BYPASS_PATHS) {
             if (requestPath.startsWith(bypassPath)) {

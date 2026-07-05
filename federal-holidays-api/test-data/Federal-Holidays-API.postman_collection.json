@@ -130,7 +130,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"holidayName\": \"Remembrance Day\",\n  \"holidayDate\": \"2026-11-11\",\n  \"country\": \"CANADA\",\n  \"isRecurring\": true,\n  \"description\": \"Commemorates the end of World War I and honors veterans\"\n}"
+					"raw": "{\n  \"holidayName\": \"Juneteenth\",\n  \"holidayDate\": \"2026-06-19\",\n  \"country\": \"USA\",\n  \"isRecurring\": true,\n  \"description\": \"Celebrates the emancipation of enslaved African Americans\"\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/v1/holidays",

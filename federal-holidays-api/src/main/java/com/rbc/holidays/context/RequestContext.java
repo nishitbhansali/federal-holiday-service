@@ -1,12 +1,7 @@
 package com.rbc.holidays.context;
 
 /**
- * Immutable context object holding request metadata extracted from HTTP headers.
- * Stored in ThreadLocal and accessible throughout the request lifecycle.
- * 
- * @param correlationId Global correlation ID (UUID format) for request tracking
- * @param userId        User identifier extracted from JWT token
- * @param requestPath   Original HTTP request path for logging/audit
+ * Immutable request metadata (correlationId, userId, requestPath) stored in ThreadLocal.
  */
 public record RequestContext(
         String correlationId,

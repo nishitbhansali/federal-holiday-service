@@ -358,8 +358,8 @@
 						{
 							"key": "file",
 							"type": "file",
-							"src": "holidays.csv",
-							"description": "CSV file with columns: holidayName,holidayDate,country,isRecurring,description"
+							"src": [],
+							"description": "IMPORTANT: Click 'Select Files' and choose 'federal-holidays-api/test-data/holidays.csv'. Do NOT manually add Content-Type header - Postman will auto-set multipart/form-data."
 						}
 					]
 				},
@@ -368,7 +368,7 @@
 					"host": ["{{baseUrl}}"],
 					"path": ["api", "v1", "holidays", "upload"]
 				},
-				"description": "Bulk upload holidays from CSV file. Max size: 10MB. Returns FileUploadResponse with totalRecords, successCount, and errors list."
+				"description": "Bulk upload holidays from CSV file.\n\nIMPORTANT SETUP:\n1. In Body tab, ensure 'form-data' is selected\n2. Click 'Select Files' button next to the file field\n3. Navigate to: federal-holidays-api/test-data/holidays.csv\n4. Do NOT add Content-Type header manually - Postman adds it automatically\n\nExpected Response:\n{\n  \"totalRecords\": 4,\n  \"successCount\": 4,\n  \"errors\": [],\n  \"failureCount\": 0\n}\n\nMax file size: 10MB"
 			},
 			"response": []
 		},
@@ -389,8 +389,8 @@
 						{
 							"key": "file",
 							"type": "file",
-							"src": "holidays.json",
-							"description": "JSON array of holiday objects"
+							"src": [],
+							"description": "IMPORTANT: Click 'Select Files' and choose 'federal-holidays-api/test-data/holidays.json'. Do NOT manually add Content-Type header - Postman will auto-set multipart/form-data."
 						}
 					]
 				},
@@ -399,7 +399,7 @@
 					"host": ["{{baseUrl}}"],
 					"path": ["api", "v1", "holidays", "upload"]
 				},
-				"description": "Bulk upload holidays from JSON file. Max size: 10MB. FileUploadResponse includes calculated failureCount() method."
+				"description": "Bulk upload holidays from JSON file.\n\nIMPORTANT SETUP:\n1. In Body tab, ensure 'form-data' is selected\n2. Click 'Select Files' button next to the file field\n3. Navigate to: federal-holidays-api/test-data/holidays.json\n4. Do NOT add Content-Type header manually - Postman adds it automatically\n\nExpected Response:\n{\n  \"totalRecords\": 2,\n  \"successCount\": 2,\n  \"errors\": [],\n  \"failureCount\": 0\n}\n\nMax file size: 10MB"
 			},
 			"response": []
 		},
